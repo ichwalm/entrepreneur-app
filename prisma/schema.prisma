@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PUBLIC
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(PUBLIC)
+  createdAt    DateTime @default(now())
+
+  ebooksUploaded Ebook[] @relation("UploadedBy")
+}
+
+model Ebook {
+  id           String   @id @default(cuid())
+  title        String
+  description  String   @db.Text
+  category     String
+  fileUrl      String
+  fileName     String
+  coverUrl     String?
+  coverName    String?
+  uploadedAt   DateTime @default(now())
+
+  uploadedById String?
+  uploadedBy   User?    @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([uploadedAt])
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  title         String
+  description   String   @db.Text
+  locationName  String?
+  locationLat   Float?
+  locationLng   Float?
+  googleMapsUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  images     ProductImage[]
+  comments   Comment[]
+  socialLink SocialMediaLink?
+
+  @@index([createdAt])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  fileName  String
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model SocialMediaLink {
+  id        String  @id @default(cuid())
+  productId String  @unique
+  instagram String?
+  whatsapp  String?
+  facebook  String?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id          String        @id @default(cuid())
+  productId   String
+  parentId    String?
+  authorName  String
+  authorEmail String?
+  content     String        @db.Text
+  status      CommentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+
+  product Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  parent  Comment? @relation("Thread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("Thread")
+
+  @@index([productId, status, createdAt])
+  @@index([parentId])
+}
+
+model RateLimit {
+  id          Int      @id @default(autoincrement())
+  action      String
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@unique([action, key, windowStart])
+  @@index([action, windowStart])
+}
