@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { sanitizeText } from "@/lib/sanitize";
 import { assertFileOk, productCreateSchema } from "@/lib/validators";
 import { rateLimitOrThrow } from "@/lib/rateLimit";
+import { saveUploadToDisk } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -81,19 +81,21 @@ export async function POST(req: Request) {
     }
 
     if (images.length > 0) {
-      const uploaded = await Promise.all(
+      const saved = await Promise.all(
         images.map(async (img) => {
-          const blob = await put(
-            `products/${product.id}/${Date.now()}-${img.name}`.replaceAll(" ", "_"),
-            img,
-            { access: "public" },
-          );
-          return { url: blob.url, fileName: img.name };
+          const out = await saveUploadToDisk({
+            file: img,
+            relativeDir: "public/products",
+            maxBytes: MAX_IMAGE_BYTES,
+            allowedMime: ["image/jpeg", "image/png", "image/webp"],
+            allowedExt: ["jpg", "jpeg", "png", "webp"],
+          });
+          return { url: `/media/products/${out.storedName}`, fileName: img.name };
         }),
       );
 
       await prisma.productImage.createMany({
-        data: uploaded.map((u) => ({
+        data: saved.map((u) => ({
           productId: product.id,
           url: u.url,
           fileName: u.fileName,

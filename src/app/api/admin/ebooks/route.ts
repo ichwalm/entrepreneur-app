@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { sanitizeText } from "@/lib/sanitize";
 import { assertFileOk, ebookCreateSchema } from "@/lib/validators";
 import { rateLimitOrThrow } from "@/lib/rateLimit";
+import { saveUploadToDisk } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -41,27 +41,31 @@ export async function POST(req: Request) {
         allowedMime: ["image/jpeg", "image/png", "image/webp"],
         allowedExt: ["jpg", "jpeg", "png", "webp"],
       });
-      const uploadedCover = await put(
-        `covers/${Date.now()}-${cover.name}`.replaceAll(" ", "_"),
-        cover,
-        { access: "public" },
-      );
-      coverUrl = uploadedCover.url;
+      const savedCover = await saveUploadToDisk({
+        file: cover,
+        relativeDir: "public/covers",
+        maxBytes: MAX_COVER_BYTES,
+        allowedMime: ["image/jpeg", "image/png", "image/webp"],
+        allowedExt: ["jpg", "jpeg", "png", "webp"],
+      });
+      coverUrl = `/media/covers/${savedCover.storedName}`;
       coverName = cover.name;
     }
 
-    const uploaded = await put(
-      `ebooks/${Date.now()}-${file.name}`.replaceAll(" ", "_"),
+    const savedEbook = await saveUploadToDisk({
       file,
-      { access: "public" },
-    );
+      relativeDir: "private/ebooks",
+      maxBytes: MAX_EBOOK_BYTES,
+      allowedMime: ["application/pdf", "application/epub+zip"],
+      allowedExt: ["pdf", "epub"],
+    });
 
     const ebook = await prisma.ebook.create({
       data: {
         title,
         description,
         category,
-        fileUrl: uploaded.url,
+        fileUrl: savedEbook.relativePath,
         fileName: file.name,
         coverUrl,
         coverName,
@@ -74,4 +78,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
-
