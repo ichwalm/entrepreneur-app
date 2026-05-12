@@ -5,7 +5,7 @@ import { resolveUploadPath } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
-const ALLOWED_TYPES = new Set(["covers", "products"]);
+const ALLOWED_TYPES = new Set(["covers", "products", "banners"]);
 
 function contentTypeFromExt(ext: string) {
   switch (ext) {
@@ -51,4 +51,3 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 }
-

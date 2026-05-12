@@ -17,7 +17,7 @@ export function AuthButtons() {
         </Link>
         <Link
           href="/register"
-          className="rounded-lg bg-foreground px-3 py-1.5 text-sm text-background hover:opacity-90"
+          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
         >
           Daftar
         </Link>
@@ -30,7 +30,7 @@ export function AuthButtons() {
       {data.user.role === "ADMIN" ? (
         <Link
           href="/admin"
-          className="rounded-lg border border-accent px-3 py-1.5 text-sm hover:bg-accent"
+          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
         >
           Dashboard
         </Link>
@@ -45,4 +45,3 @@ export function AuthButtons() {
     </div>
   );
 }
-

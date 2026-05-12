@@ -2,8 +2,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CommentsSection } from "./comments-section";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string } | Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await Promise.resolve(params);
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: { title: true, description: true },
+  });
+  if (!product) return { title: "Produk" };
+  return {
+    title: product.title,
+    description: product.description.slice(0, 160),
+  };
+}
 
 export default async function ProductDetailPage({
   params,
@@ -16,9 +34,16 @@ export default async function ProductDetailPage({
     include: {
       images: { orderBy: { createdAt: "asc" } },
       socialLink: true,
+      tags: { include: { tag: true } },
     },
   });
   if (!product) return notFoundView();
+
+  const promos = await prisma.promoCode.findMany({
+    where: { isActive: true },
+    orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
+    take: 3,
+  });
 
   const comments = await prisma.comment.findMany({
     where: { productId: id, status: "APPROVED" },
@@ -30,6 +55,26 @@ export default async function ProductDetailPage({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{product.title}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {product.isFeatured ? (
+              <span className="rounded-full bg-brand px-3 py-1 text-xs font-semibold text-black">
+                Featured
+              </span>
+            ) : null}
+            {product.category ? (
+              <span className="rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs text-foreground/80">
+                {product.category}
+              </span>
+            ) : null}
+            {product.tags.map((t) => (
+              <span
+                key={t.tagId}
+                className="rounded-full border border-accent px-3 py-1 text-xs text-foreground/70"
+              >
+                {t.tag.name}
+              </span>
+            ))}
+          </div>
           {product.locationName ? (
             <div className="mt-2 text-sm text-foreground/70">
               {product.locationName}
@@ -70,9 +115,16 @@ export default async function ProductDetailPage({
 
           <div className="mt-8 rounded-xl border border-accent bg-background p-5">
             <div className="text-sm font-semibold">Deskripsi</div>
-            <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/85">
-              {product.description}
-            </p>
+            {product.descriptionHtml ? (
+              <div
+                className="rte mt-3 text-sm"
+                dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+              />
+            ) : (
+              <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/85">
+                {product.description}
+              </p>
+            )}
           </div>
 
           <div className="mt-8">
@@ -93,6 +145,32 @@ export default async function ProductDetailPage({
               </div>
             )}
           </div>
+
+          {promos.length > 0 ? (
+            <div className="rounded-xl border border-accent bg-background p-5">
+              <div className="text-sm font-semibold">Promo</div>
+              <div className="mt-3 space-y-2">
+                {promos.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold">{p.code}</div>
+                      <div className="text-xs text-foreground/60">
+                        {p.percentOff ? `${p.percentOff}% off` : "Promo aktif"}
+                        {p.expiresAt
+                          ? ` • hingga ${new Date(p.expiresAt).toLocaleDateString(
+                              "id-ID",
+                            )}`
+                          : ""}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="rounded-xl border border-accent bg-background p-5">
             <div className="text-sm font-semibold">Social Media</div>

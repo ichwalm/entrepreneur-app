@@ -1,56 +1,317 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import type { Ebook, Product, ProductImage } from "@prisma/client";
+import type { Banner, Prisma, PromoCode } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const ebooksPromise = prisma.ebook.findMany({
-    orderBy: { uploadedAt: "desc" },
-    take: 12,
-  });
-  const productsPromise = prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 6,
-    include: { images: { take: 1, orderBy: { createdAt: "asc" } } },
-  });
+type EbookWithTags = Prisma.EbookGetPayload<{
+  include: { tags: { include: { tag: true } } };
+}>;
+
+type ProductShowcase = Prisma.ProductGetPayload<{
+  include: { images: true; tags: { include: { tag: true } } };
+}>;
+
+export default async function Home() {
+  const [banners, promos, featuredProducts, latestProducts, ebooks] =
+    await Promise.all([
+      prisma.banner.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+        take: 6,
+      }),
+      prisma.promoCode.findMany({
+        where: { isActive: true },
+        orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
+        take: 6,
+      }),
+      prisma.product.findMany({
+        where: { isFeatured: true },
+        orderBy: { updatedAt: "desc" },
+        take: 10,
+        include: {
+          images: { take: 1, orderBy: { createdAt: "asc" } },
+          tags: { include: { tag: true } },
+        },
+      }),
+      prisma.product.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        include: {
+          images: { take: 1, orderBy: { createdAt: "asc" } },
+          tags: { include: { tag: true } },
+        },
+      }),
+      prisma.ebook.findMany({
+        orderBy: { uploadedAt: "desc" },
+        take: 9,
+        include: { tags: { include: { tag: true } } },
+      }),
+    ]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10">
-      <section className="space-y-3">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Platform Kewirausahaan
-        </h1>
-        <p className="max-w-2xl text-sm text-foreground/70">
-          Jelajahi materi e-book kewirausahaan dan promosi produk UMKM. Pengunjung
-          dapat melihat konten tanpa login; login diperlukan untuk download e-book.
-        </p>
+    <div className="w-full">
+      <section id="home" className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute left-[-120px] top-[-120px] h-72 w-72 rounded-full bg-brand/25 blur-3xl" />
+          <div className="absolute right-[-120px] top-[40px] h-72 w-72 rounded-full bg-brand2/20 blur-3xl" />
+          <div className="absolute bottom-[-160px] left-[20%] h-72 w-72 rounded-full bg-accent/40 blur-3xl" />
+        </div>
+
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-10 px-4 py-14 md:grid-cols-2 md:items-center md:py-20">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs text-foreground/80">
+              <span className="h-2 w-2 rounded-full bg-brand" />
+              Profil usaha modern + promosi produk
+            </div>
+            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+              Bangun brand. Promosikan produk. Tumbuh lebih cepat.
+            </h1>
+            <p className="max-w-xl text-sm leading-7 text-foreground/75">
+              Website entrepreneur untuk menampilkan identitas, produk unggulan,
+              materi e-book, dan sistem komentar dengan moderasi. Admin mengelola
+              konten, pengunjung menikmati pengalaman yang cepat dan rapi.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/#showcase"
+                className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90"
+              >
+                Lihat Produk
+              </Link>
+              <Link
+                href="/#ebooks"
+                className="rounded-lg border border-accent px-5 py-2.5 text-sm hover:bg-accent"
+              >
+                Jelajahi E-Book
+              </Link>
+              <Link
+                href="/#contact"
+                className="rounded-lg border border-accent px-5 py-2.5 text-sm hover:bg-accent"
+              >
+                Hubungi Kami
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-4 pt-4 text-xs text-foreground/70">
+              <div className="rounded-xl border border-accent bg-background/50 px-3 py-3">
+                <div className="text-lg font-semibold text-foreground">3s</div>
+                <div className="mt-1">Target load cepat</div>
+              </div>
+              <div className="rounded-xl border border-accent bg-background/50 px-3 py-3">
+                <div className="text-lg font-semibold text-foreground">SEO</div>
+                <div className="mt-1">Metadata + struktur</div>
+              </div>
+              <div className="rounded-xl border border-accent bg-background/50 px-3 py-3">
+                <div className="text-lg font-semibold text-foreground">WCAG</div>
+                <div className="mt-1">Aksesibilitas</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <BannerCarousel banners={banners} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-accent bg-background/50 p-4">
+                <div className="text-xs text-foreground/60">Promo Aktif</div>
+                <PromoList promos={promos} />
+              </div>
+              <div className="rounded-2xl border border-accent bg-background/50 p-4">
+                <div className="text-xs text-foreground/60">Katalog</div>
+                <div className="mt-3 space-y-2 text-sm text-foreground/80">
+                  <div className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2">
+                    <span>E-Book Materi</span>
+                    <span className="text-xs text-foreground/60">Free/Member</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2">
+                    <span>Produk UMKM</span>
+                    <span className="text-xs text-foreground/60">Showcase</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2">
+                    <span>Testimoni</span>
+                    <span className="text-xs text-foreground/60">Brand trust</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section id="ebooks" className="mt-12">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-xl font-semibold tracking-tight">E-Book</h2>
+      <section id="about" className="mx-auto w-full max-w-6xl px-4 py-14">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:items-center">
+          <div className="space-y-4">
+            <div className="text-xs font-semibold tracking-widest text-foreground/60">
+              ABOUT US
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Identitas brand yang kuat, pengalaman yang clean.
+            </h2>
+            <p className="text-sm leading-7 text-foreground/75">
+              Kami membantu entrepreneur menyajikan profil usaha yang modern, rapi,
+              dan konsisten. Konten dikelola lewat dashboard admin yang aman, dan
+              pengunjung mendapatkan experience cepat serta mudah diakses di semua
+              perangkat.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <FeatureCard title="Konten Terstruktur" text="Banner, produk unggulan, promo codes, dan e-book." />
+              <FeatureCard title="Moderasi Komentar" text="Komentar threaded dengan approval admin." />
+              <FeatureCard title="Optimasi Performa" text="Image optimization, layout efisien, dan server rendering." />
+              <FeatureCard title="Aksesibilitas" text="Navigasi jelas, heading rapi, dan fokus state." />
+            </div>
+          </div>
+          <div className="rounded-3xl border border-accent bg-accent/10 p-6">
+            <div className="rounded-2xl border border-accent bg-background p-6">
+              <div className="text-xs text-foreground/60">Tagline</div>
+              <div className="mt-2 text-2xl font-semibold tracking-tight">
+                “From idea to market — faster.”
+              </div>
+              <div className="mt-4 text-sm text-foreground/75">
+                Tampilkan produk terbaikmu dengan visual konsisten dan copywriting yang fokus pada nilai.
+              </div>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <span className="rounded-full bg-brand/15 px-3 py-1 text-xs text-brand">
+                  Modern UI
+                </span>
+                <span className="rounded-full bg-brand2/15 px-3 py-1 text-xs text-brand2">
+                  Promo-ready
+                </span>
+                <span className="rounded-full bg-accent/40 px-3 py-1 text-xs text-foreground/80">
+                  Admin CMS
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <EbookGrid promise={ebooksPromise} />
       </section>
 
-      <section id="produk" className="mt-14">
+      <section id="showcase" className="mx-auto w-full max-w-6xl px-4 pb-14">
         <div className="flex items-end justify-between gap-4">
-          <h2 className="text-xl font-semibold tracking-tight">Promosi Produk</h2>
+          <div>
+            <div className="text-xs font-semibold tracking-widest text-foreground/60">
+              PRODUCT SHOWCASE
+            </div>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">
+              Produk unggulan & terbaru
+            </h2>
+          </div>
+          <Link
+            href="/#contact"
+            className="hidden rounded-lg border border-accent px-4 py-2 text-sm hover:bg-accent sm:inline-flex"
+          >
+            Ajukan promosi
+          </Link>
         </div>
-        <ProductGrid promise={productsPromise} />
+
+        <ShowcaseCarousel
+          featured={featuredProducts as ProductShowcase[]}
+          fallback={latestProducts as ProductShowcase[]}
+        />
+      </section>
+
+      <section id="ebooks" className="mx-auto w-full max-w-6xl px-4 pb-14">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold tracking-widest text-foreground/60">
+              RESOURCES
+            </div>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">
+              Materi e-book kewirausahaan
+            </h2>
+          </div>
+          <Link
+            href="/login"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-black hover:opacity-90"
+          >
+            Login untuk download
+          </Link>
+        </div>
+        <EbookGrid ebooks={ebooks as EbookWithTags[]} />
+      </section>
+
+      <section className="mx-auto w-full max-w-6xl px-4 pb-14">
+        <div className="rounded-3xl border border-accent bg-accent/10 p-6 md:p-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-center">
+            <div className="space-y-3">
+              <div className="text-xs font-semibold tracking-widest text-foreground/60">
+                TESTIMONI
+              </div>
+              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                Dipercaya oleh pelaku usaha
+              </h2>
+              <p className="text-sm text-foreground/75">
+                Tampilan rapi, proses konten cepat, dan promosi lebih terarah.
+              </p>
+            </div>
+            <TestimonialGrid />
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="mx-auto w-full max-w-6xl px-4 pb-16">
+        <div className="rounded-3xl border border-accent bg-background p-6 md:p-10">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-center">
+            <div className="space-y-3">
+              <div className="text-xs font-semibold tracking-widest text-foreground/60">
+                CALL TO ACTION
+              </div>
+              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                Siap promosikan produkmu hari ini?
+              </h2>
+              <p className="text-sm leading-7 text-foreground/75">
+                Admin dapat menambahkan produk, banner promo, dan kode promo untuk
+                meningkatkan konversi. Hubungi kami untuk penempatan produk unggulan.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Link
+                  href="/admin"
+                  className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90"
+                >
+                  Dashboard Admin
+                </Link>
+                <a
+                  href="mailto:hello@example.com"
+                  className="rounded-lg border border-accent px-5 py-2.5 text-sm hover:bg-accent"
+                >
+                  Email Kami
+                </a>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-accent bg-accent/10 p-6">
+              <div className="text-sm font-semibold">Kontak</div>
+              <div className="mt-3 space-y-2 text-sm text-foreground/80">
+                <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
+                  <span>Email</span>
+                  <span className="text-foreground/70">hello@example.com</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
+                  <span>WhatsApp</span>
+                  <span className="text-foreground/70">+62 812-xxxx-xxxx</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
+                  <span>Jam Operasional</span>
+                  <span className="text-foreground/70">09.00–17.00</span>
+                </div>
+              </div>
+              <div className="mt-4 text-xs text-foreground/60">
+                Ganti informasi kontak ini sesuai brand kamu.
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer className="mt-10 text-center text-xs text-foreground/50">
+          © {new Date().getFullYear()} Entrepreneur Platform. All rights reserved.
+        </footer>
       </section>
     </div>
   );
 }
 
 async function EbookGrid({
-  promise,
+  ebooks,
 }: {
-  promise: ReturnType<typeof prisma.ebook.findMany>;
+  ebooks: EbookWithTags[];
 }) {
-  const ebooks = (await promise) as Ebook[];
   if (ebooks.length === 0) {
     return (
       <div className="mt-6 rounded-xl border border-accent bg-accent/10 px-4 py-6 text-sm text-foreground/70">
@@ -60,34 +321,48 @@ async function EbookGrid({
   }
 
   return (
-    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {ebooks.map((e) => (
         <Link
           key={e.id}
           href={`/ebooks/${e.id}`}
-          className="group rounded-xl border border-accent bg-background p-4 hover:bg-accent/10"
+          className="group rounded-2xl border border-accent bg-background p-5 hover:bg-accent/10"
         >
           <div className="flex gap-4">
-            <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg border border-accent bg-accent/10">
+            <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-xl border border-accent bg-accent/10">
               {e.coverUrl ? (
                 <Image
                   src={e.coverUrl}
                   alt={e.title}
                   fill
-                  sizes="64px"
+                  sizes="80px"
                   className="object-cover"
                 />
               ) : null}
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium">{e.title}</div>
+              <div className="truncate text-sm font-semibold">{e.title}</div>
               <div className="mt-1 line-clamp-2 text-xs text-foreground/70">
                 {e.description}
               </div>
-              <div className="mt-2 text-[11px] text-foreground/60">
-                {e.category} •{" "}
-                {new Date(e.uploadedAt).toLocaleDateString("id-ID")}
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-foreground/60">
+                <span className="rounded-full bg-accent/40 px-2 py-0.5">
+                  {e.category}
+                </span>
+                <span>{new Date(e.uploadedAt).toLocaleDateString("id-ID")}</span>
               </div>
+              {e.tags.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {e.tags.slice(0, 3).map((t) => (
+                    <span
+                      key={t.tagId}
+                      className="rounded-full border border-accent px-2 py-0.5 text-[11px] text-foreground/70"
+                    >
+                      {t.tag.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         </Link>
@@ -96,51 +371,231 @@ async function EbookGrid({
   );
 }
 
-async function ProductGrid({
-  promise,
+async function BannerCarousel({
+  banners,
 }: {
-  promise: ReturnType<typeof prisma.product.findMany>;
+  banners: Banner[];
 }) {
-  const products = (await promise) as Array<Product & { images: ProductImage[] }>;
-  if (products.length === 0) {
+  if (banners.length === 0) {
     return (
-      <div className="mt-6 rounded-xl border border-accent bg-accent/10 px-4 py-6 text-sm text-foreground/70">
+      <div className="rounded-2xl border border-accent bg-background/50 p-6">
+        <div className="text-xs text-foreground/60">Banner</div>
+        <div className="mt-3 text-sm text-foreground/75">
+          Tambahkan banner promo dari dashboard admin untuk tampil di sini.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-accent bg-background/50 p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-foreground/60">Promo Banner</div>
+        <div className="text-xs text-foreground/60">
+          {banners.length} item
+        </div>
+      </div>
+      <div className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2">
+        {banners.map((b) => (
+          <div
+            key={b.id}
+            className="relative w-[85%] shrink-0 snap-start overflow-hidden rounded-xl border border-accent bg-accent/10 sm:w-[70%]"
+          >
+            {b.imageUrl ? (
+              <div className="relative h-40 w-full">
+                <Image
+                  src={b.imageUrl}
+                  alt={b.title}
+                  fill
+                  sizes="(max-width: 768px) 85vw, 40vw"
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className="h-40 w-full bg-gradient-to-br from-brand/25 via-accent/20 to-brand2/20" />
+            )}
+            <div className="space-y-2 p-4">
+              <div className="text-sm font-semibold">{b.title}</div>
+              {b.subtitle ? (
+                <div className="line-clamp-2 text-xs text-foreground/70">
+                  {b.subtitle}
+                </div>
+              ) : null}
+              {b.linkUrl ? (
+                <a
+                  href={b.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex text-xs font-semibold text-brand underline underline-offset-4"
+                >
+                  Lihat promo
+                </a>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function PromoList({
+  promos,
+}: {
+  promos: PromoCode[];
+}) {
+  if (promos.length === 0) {
+    return (
+      <div className="mt-3 text-sm text-foreground/75">
+        Belum ada promo code.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      {promos.slice(0, 3).map((p) => (
+        <div
+          key={p.id}
+          className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2"
+        >
+          <div className="min-w-0">
+            <div className="truncate text-xs font-semibold">{p.code}</div>
+            <div className="text-[11px] text-foreground/60">
+              {p.percentOff ? `${p.percentOff}% off` : "Promo aktif"}
+            </div>
+          </div>
+          <div className="text-[11px] text-foreground/60">
+            {p.expiresAt ? new Date(p.expiresAt).toLocaleDateString("id-ID") : ""}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FeatureCard(props: { title: string; text: string }) {
+  return (
+    <div className="rounded-2xl border border-accent bg-background p-4">
+      <div className="text-sm font-semibold">{props.title}</div>
+      <div className="mt-1 text-xs leading-6 text-foreground/70">{props.text}</div>
+    </div>
+  );
+}
+
+async function ShowcaseCarousel({
+  featured,
+  fallback,
+}: {
+  featured: ProductShowcase[];
+  fallback: ProductShowcase[];
+}) {
+  const items = featured.length > 0 ? featured : fallback;
+
+  if (items.length === 0) {
+    return (
+      <div className="mt-8 rounded-2xl border border-accent bg-accent/10 px-4 py-8 text-sm text-foreground/70">
         Belum ada produk yang dipromosikan.
       </div>
     );
   }
 
   return (
-    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((p) => (
-        <Link
-          key={p.id}
-          href={`/products/${p.id}`}
-          className="group overflow-hidden rounded-xl border border-accent bg-background hover:bg-accent/10"
-        >
-          <div className="relative h-44 w-full border-b border-accent bg-accent/10">
-            {p.images[0]?.url ? (
-              <Image
-                src={p.images[0].url}
-                alt={p.title}
-                fill
-                sizes="(max-width: 1024px) 100vw, 33vw"
-                className="object-cover"
-              />
-            ) : null}
-          </div>
-          <div className="p-4">
-            <div className="truncate text-sm font-medium">{p.title}</div>
-            <div className="mt-1 line-clamp-2 text-xs text-foreground/70">
-              {p.description}
+    <div className="mt-8">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-3">
+        {items.map((p) => (
+          <Link
+            key={p.id}
+            href={`/products/${p.id}`}
+            className="group w-[86%] shrink-0 snap-start overflow-hidden rounded-3xl border border-accent bg-background hover:bg-accent/10 sm:w-[60%] lg:w-[40%]"
+          >
+            <div className="relative h-52 w-full border-b border-accent bg-accent/10">
+              {p.images[0]?.url ? (
+                <Image
+                  src={p.images[0].url}
+                  alt={p.title}
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 40vw"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-brand/25 via-accent/20 to-brand2/20" />
+              )}
+              {p.isFeatured ? (
+                <div className="absolute left-3 top-3 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-black">
+                  Featured
+                </div>
+              ) : null}
             </div>
-            {p.locationName ? (
-              <div className="mt-2 text-[11px] text-foreground/60">
-                {p.locationName}
+            <div className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-base font-semibold">{p.title}</div>
+                  {p.category ? (
+                    <div className="mt-1 text-xs text-foreground/60">
+                      {p.category}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs text-foreground/80">
+                  Lihat
+                </div>
               </div>
-            ) : null}
-          </div>
-        </Link>
+              <div className="mt-3 line-clamp-2 text-sm text-foreground/75">
+                {p.description}
+              </div>
+              {p.locationName ? (
+                <div className="mt-3 text-xs text-foreground/60">
+                  {p.locationName}
+                </div>
+              ) : null}
+              {p.tags.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {p.tags.slice(0, 3).map((t) => (
+                    <span
+                      key={t.tagId}
+                      className="rounded-full border border-accent px-2 py-0.5 text-[11px] text-foreground/70"
+                    >
+                      {t.tag.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="mt-2 text-xs text-foreground/60">
+        Geser untuk melihat lebih banyak
+      </div>
+    </div>
+  );
+}
+
+function TestimonialGrid() {
+  const items = [
+    {
+      name: "Rani · Fashion UMKM",
+      text: "Tampilan modernnya bikin produk terlihat premium. Proses upload cepat dan rapi.",
+    },
+    {
+      name: "Dimas · Kuliner",
+      text: "Website jadi terasa profesional. Komentar bisa dimoderasi jadi lebih aman.",
+    },
+    {
+      name: "Sari · Jasa",
+      text: "CTA jelas, pengunjung gampang menemukan informasi dan cara menghubungi.",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {items.map((t) => (
+        <div key={t.name} className="rounded-2xl border border-accent bg-background p-5">
+          <div className="text-sm font-semibold">{t.name}</div>
+          <div className="mt-2 text-sm leading-7 text-foreground/75">{t.text}</div>
+        </div>
       ))}
     </div>
   );

@@ -25,6 +25,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Produk
             </Link>
             <Link
+              href="/admin/banners"
+              className="rounded-lg px-2 py-1.5 hover:bg-accent"
+            >
+              Banner
+            </Link>
+            <Link
+              href="/admin/promos"
+              className="rounded-lg px-2 py-1.5 hover:bg-accent"
+            >
+              Promo Codes
+            </Link>
+            <Link
+              href="/admin/tags"
+              className="rounded-lg px-2 py-1.5 hover:bg-accent"
+            >
+              Tag
+            </Link>
+            <Link
               href="/admin/comments"
               className="rounded-lg px-2 py-1.5 hover:bg-accent"
             >
@@ -37,4 +55,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
-

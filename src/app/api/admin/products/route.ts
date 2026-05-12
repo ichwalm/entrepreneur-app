@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sanitizeText } from "@/lib/sanitize";
+import { sanitizeRichText, sanitizeText } from "@/lib/sanitize";
 import { assertFileOk, productCreateSchema } from "@/lib/validators";
 import { rateLimitOrThrow } from "@/lib/rateLimit";
 import { saveUploadToDisk } from "@/lib/storage";
+import { parseTags, upsertTags } from "@/lib/tags";
 
 export const runtime = "nodejs";
 
@@ -20,11 +21,30 @@ export async function POST(req: Request) {
     const form = await req.formData();
     const title = sanitizeText(String(form.get("title") ?? ""));
     const description = sanitizeText(String(form.get("description") ?? ""));
+    const descriptionHtmlRaw = form.get("descriptionHtml");
+    const descriptionHtml =
+      typeof descriptionHtmlRaw === "string" && descriptionHtmlRaw.trim()
+        ? sanitizeRichText(descriptionHtmlRaw)
+        : null;
 
     const locationNameRaw = form.get("locationName");
     const locationName = locationNameRaw
       ? sanitizeText(String(locationNameRaw))
       : null;
+
+    const categoryRaw = form.get("category");
+    const category =
+      typeof categoryRaw === "string" && categoryRaw.trim()
+        ? sanitizeText(categoryRaw)
+        : null;
+
+    const isFeaturedRaw = form.get("isFeatured");
+    const isFeatured =
+      typeof isFeaturedRaw === "string" ? isFeaturedRaw === "true" : false;
+
+    const tagsRaw = form.get("tags");
+    const tags =
+      typeof tagsRaw === "string" && tagsRaw.trim() ? parseTags(tagsRaw) : [];
 
     const instagramRaw = form.get("instagram");
     const whatsappRaw = form.get("whatsapp");
@@ -46,7 +66,11 @@ export async function POST(req: Request) {
     productCreateSchema.parse({
       title,
       description,
+      descriptionHtml,
       locationName,
+      category,
+      isFeatured,
+      tags,
       instagram,
       whatsapp,
       facebook,
@@ -65,9 +89,23 @@ export async function POST(req: Request) {
       data: {
         title,
         description,
+        descriptionHtml,
+        category,
+        isFeatured,
         locationName,
       },
     });
+
+    if (tags.length > 0) {
+      const tagRows = await upsertTags(tags);
+      await prisma.productTag.createMany({
+        data: tagRows.map((t) => ({
+          productId: product.id,
+          tagId: t.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     if (instagram || whatsapp || facebook) {
       await prisma.socialMediaLink.create({

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sanitizeText } from "@/lib/sanitize";
+import { sanitizeRichText, sanitizeText } from "@/lib/sanitize";
 import { assertFileOk, ebookCreateSchema } from "@/lib/validators";
 import { rateLimitOrThrow } from "@/lib/rateLimit";
 import { saveUploadToDisk } from "@/lib/storage";
+import { parseTags, upsertTags } from "@/lib/tags";
 
 export const runtime = "nodejs";
 
@@ -17,8 +18,17 @@ export async function POST(req: Request) {
     const form = await req.formData();
     const title = sanitizeText(String(form.get("title") ?? ""));
     const description = sanitizeText(String(form.get("description") ?? ""));
+    const descriptionHtmlRaw = form.get("descriptionHtml");
+    const descriptionHtml =
+      typeof descriptionHtmlRaw === "string" && descriptionHtmlRaw.trim()
+        ? sanitizeRichText(descriptionHtmlRaw)
+        : null;
     const category = sanitizeText(String(form.get("category") ?? ""));
-    ebookCreateSchema.parse({ title, description, category });
+    const tagsRaw = form.get("tags");
+    const tags =
+      typeof tagsRaw === "string" && tagsRaw.trim() ? parseTags(tagsRaw) : [];
+
+    ebookCreateSchema.parse({ title, description, descriptionHtml, category, tags });
 
     const file = form.get("file");
     if (!(file instanceof File)) {
@@ -64,6 +74,7 @@ export async function POST(req: Request) {
       data: {
         title,
         description,
+        descriptionHtml,
         category,
         fileUrl: savedEbook.relativePath,
         fileName: file.name,
@@ -71,6 +82,17 @@ export async function POST(req: Request) {
         coverName,
       },
     });
+
+    if (tags.length > 0) {
+      const tagRows = await upsertTags(tags);
+      await prisma.ebookTag.createMany({
+        data: tagRows.map((t) => ({
+          ebookId: ebook.id,
+          tagId: t.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     return NextResponse.json({ ok: true, id: ebook.id });
   } catch (e) {

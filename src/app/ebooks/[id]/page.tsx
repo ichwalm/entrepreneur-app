@@ -3,8 +3,26 @@ import Link from "next/link";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string } | Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await Promise.resolve(params);
+  const ebook = await prisma.ebook.findUnique({
+    where: { id },
+    select: { title: true, description: true, category: true },
+  });
+  if (!ebook) return { title: "E-Book" };
+  return {
+    title: ebook.title,
+    description: `${ebook.category} · ${ebook.description}`.slice(0, 160),
+  };
+}
 
 export default async function EbookDetailPage({
   params,
@@ -12,7 +30,10 @@ export default async function EbookDetailPage({
   params: { id: string } | Promise<{ id: string }>;
 }) {
   const { id } = await Promise.resolve(params);
-  const ebook = await prisma.ebook.findUnique({ where: { id } });
+  const ebook = await prisma.ebook.findUnique({
+    where: { id },
+    include: { tags: { include: { tag: true } } },
+  });
   if (!ebook) return notFoundView();
 
   const session = await getServerSession(authOptions);
@@ -42,9 +63,29 @@ export default async function EbookDetailPage({
             Upload: {new Date(ebook.uploadedAt).toLocaleDateString("id-ID")}
           </div>
 
-          <p className="mt-6 whitespace-pre-wrap text-sm text-foreground/85">
-            {ebook.description}
-          </p>
+          {ebook.tags.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {ebook.tags.map((t) => (
+                <span
+                  key={t.tagId}
+                  className="rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs text-foreground/80"
+                >
+                  {t.tag.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {ebook.descriptionHtml ? (
+            <div
+              className="rte mt-6 text-sm"
+              dangerouslySetInnerHTML={{ __html: ebook.descriptionHtml }}
+            />
+          ) : (
+            <p className="mt-6 whitespace-pre-wrap text-sm text-foreground/85">
+              {ebook.description}
+            </p>
+          )}
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             {canDownload ? (
@@ -84,4 +125,3 @@ function notFoundView() {
     </div>
   );
 }
-

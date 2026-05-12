@@ -1,9 +1,28 @@
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import { EbookUploadForm } from "./upload-form";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminEbookNewPage() {
+export default async function AdminEbookNewPage() {
+  const [categories, tags] = await Promise.all([
+    prisma.ebook.findMany({
+      select: { category: true },
+      distinct: ["category"],
+    }),
+    prisma.tag.findMany({
+      select: { name: true },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    }),
+  ]);
+
+  const categoryOptions = categories
+    .map((c) => c.category)
+    .filter(Boolean)
+    .sort((a, b) => String(a).localeCompare(String(b), "id-ID"));
+  const tagOptions = tags.map((t) => t.name);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -15,8 +34,11 @@ export default function AdminEbookNewPage() {
           Kembali
         </Link>
       </div>
-      <EbookUploadForm />
+      <EbookUploadForm
+        mode="create"
+        categoryOptions={categoryOptions}
+        tagOptions={tagOptions}
+      />
     </div>
   );
 }
-

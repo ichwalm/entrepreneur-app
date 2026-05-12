@@ -4,10 +4,34 @@ import { DeleteEbookButton } from "./delete-button";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminEbooksPage() {
+export default async function AdminEbooksPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined> | Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await Promise.resolve(searchParams);
+  const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const category = typeof sp.category === "string" ? sp.category.trim() : "";
+
+  const where = {
+    ...(q ? { OR: [{ title: { contains: q } }, { description: { contains: q } }] } : {}),
+    ...(category ? { category } : {}),
+  } as const;
+
   const ebooks = await prisma.ebook.findMany({
+    where,
     orderBy: { uploadedAt: "desc" },
   });
+
+  const categories = await prisma.ebook.findMany({
+    select: { category: true },
+    distinct: ["category"],
+  });
+
+  const categoryOptions = categories
+    .map((c) => c.category)
+    .filter(Boolean)
+    .sort((a, b) => String(a).localeCompare(String(b), "id-ID"));
 
   return (
     <div className="space-y-6">
@@ -15,11 +39,46 @@ export default async function AdminEbooksPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Manajemen E-Book</h1>
         <Link
           href="/admin/ebooks/new"
-          className="rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background"
+          className="rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-black hover:opacity-90"
         >
           Upload E-Book
         </Link>
       </div>
+
+      <form className="grid grid-cols-1 gap-3 rounded-xl border border-accent bg-accent/10 p-4 md:grid-cols-4">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Cari judul/deskripsi..."
+          className="w-full rounded-lg border border-accent bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20 md:col-span-2"
+        />
+        <select
+          name="category"
+          defaultValue={category}
+          className="w-full rounded-lg border border-accent bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+        >
+          <option value="">Semua kategori</option>
+          {categoryOptions.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <div className="flex items-center gap-2">
+          <button
+            type="submit"
+            className="rounded-lg border border-accent px-4 py-2 text-sm hover:bg-accent"
+          >
+            Filter
+          </button>
+          <Link
+            href="/admin/ebooks"
+            className="rounded-lg border border-accent px-4 py-2 text-sm hover:bg-accent"
+          >
+            Reset
+          </Link>
+        </div>
+      </form>
 
       <div className="overflow-hidden rounded-xl border border-accent">
         <table className="w-full text-left text-sm">
@@ -46,6 +105,12 @@ export default async function AdminEbooksPage() {
                       className="rounded-lg border border-accent px-2 py-1 text-xs hover:bg-accent"
                     >
                       Lihat
+                    </Link>
+                    <Link
+                      href={`/admin/ebooks/${e.id}/edit`}
+                      className="rounded-lg border border-accent px-2 py-1 text-xs hover:bg-accent"
+                    >
+                      Edit
                     </Link>
                     <DeleteEbookButton id={e.id} />
                   </div>
