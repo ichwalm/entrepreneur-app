@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { AuthButtons } from "@/components/AuthButtons";
 
 export function NavBar() {
@@ -6,8 +7,8 @@ export function NavBar() {
     <header className="sticky top-0 z-30 border-b border-accent/80 bg-background/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-black">
-            E
+          <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg">
+            <Image src="/logo.png" alt="Logo" fill className="object-contain" sizes="32px" />
           </span>
           <span>Entrepreneur</span>
         </Link>
