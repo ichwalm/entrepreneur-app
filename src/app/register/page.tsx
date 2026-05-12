@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -43,6 +44,16 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-12">
+      <div className="relative mb-8 h-48 w-full overflow-hidden rounded-2xl border border-accent bg-accent/5">
+        <Image
+          src="/illustrations/login_illustration.png"
+          alt="Secure Authentication and Registration"
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="theme-illustration object-contain p-4 transition-transform duration-700 hover:scale-105"
+          priority
+        />
+      </div>
       <h1 className="text-3xl font-semibold tracking-tight">Daftar</h1>
       <p className="mt-2 text-base text-foreground/70">
         Buat akun untuk download e-book.

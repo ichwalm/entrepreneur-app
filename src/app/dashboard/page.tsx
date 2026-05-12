@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -38,6 +39,17 @@ export default async function PublicDashboardPage() {
         >
           Upload Promosi Produk
         </Link>
+      </div>
+
+      <div className="relative mt-8 h-64 w-full overflow-hidden rounded-2xl border border-accent bg-accent/5">
+        <Image
+          src="/illustrations/dashboard_illustration.png"
+          alt="Data Analytics Dashboard"
+          fill
+          sizes="(max-width: 1200px) 100vw, 1200px"
+          className="theme-illustration object-contain p-4 transition-transform duration-700 hover:scale-105"
+          priority
+        />
       </div>
 
       <div className="mt-8 rounded-xl border border-accent bg-accent/10 p-4">

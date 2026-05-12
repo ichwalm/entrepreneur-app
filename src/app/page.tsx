@@ -111,9 +111,26 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <BannerCarousel banners={banners} />
-            <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-center">
+            <div className="relative h-80 w-full max-w-lg md:h-[450px] lg:h-[550px]">
+              <Image
+                src="/illustrations/hero_illustration.png"
+                alt="Technology and Business Growth"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="theme-illustration object-contain transition-transform duration-700 hover:scale-105"
+                priority
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto w-full max-w-6xl px-4 pb-14">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <BannerCarousel banners={banners} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
               <div className="rounded-2xl border border-accent bg-background/50 p-4">
                 <div className="text-xs text-foreground/60">Promo Aktif</div>
                 <PromoList promos={promos} />
@@ -162,7 +179,19 @@ export default async function Home() {
               <FeatureCard title="Aksesibilitas" text="Navigasi jelas, heading rapi, dan fokus state." />
             </div>
           </div>
-          <div className="rounded-3xl border border-accent bg-accent/10 p-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-center">
+              <div className="relative h-80 w-full max-w-lg md:h-[400px]">
+                <Image
+                  src="/illustrations/about_illustration.png"
+                  alt="Teamwork and Structured Workflow"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="theme-illustration object-contain transition-transform duration-700 hover:scale-105"
+                />
+              </div>
+            </div>
+            <div className="rounded-3xl border border-accent bg-accent/10 p-6">
             <div className="rounded-2xl border border-accent bg-background p-6">
               <div className="text-xs text-foreground/60">Tagline</div>
               <div className="mt-2 text-2xl font-semibold tracking-tight">
@@ -185,7 +214,8 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
       <section id="showcase" className="mx-auto w-full max-w-6xl px-4 pb-14">
         <div className="flex items-end justify-between gap-4">
@@ -277,6 +307,17 @@ export default async function Home() {
                 >
                   Email Kami
                 </a>
+              </div>
+              <div className="mt-8 flex items-center justify-center">
+                <div className="relative h-72 w-full max-w-lg md:h-[350px]">
+                  <Image
+                    src="/illustrations/contact_illustration.png"
+                    alt="Customer Support and Communication"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="theme-illustration object-contain transition-transform duration-700 hover:scale-105"
+                  />
+                </div>
               </div>
             </div>
             <div className="rounded-2xl border border-accent bg-accent/10 p-6">
