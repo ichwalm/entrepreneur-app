@@ -34,7 +34,7 @@ export default function RegisterPage() {
         email,
         password,
         redirect: true,
-        callbackUrl: "/",
+        callbackUrl: "/dashboard",
       });
     } finally {
       setLoading(false);
@@ -43,8 +43,8 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Daftar</h1>
-      <p className="mt-2 text-sm text-foreground/70">
+      <h1 className="text-3xl font-semibold tracking-tight">Daftar</h1>
+      <p className="mt-2 text-base text-foreground/70">
         Buat akun untuk download e-book.
       </p>
 
@@ -54,7 +54,7 @@ export default function RegisterPage() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-accent bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-foreground/20"
+            className="w-full rounded-lg border border-accent bg-background px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-foreground/20"
             required
           />
         </div>
@@ -64,7 +64,7 @@ export default function RegisterPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-accent bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-foreground/20"
+            className="w-full rounded-lg border border-accent bg-background px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-foreground/20"
             required
           />
         </div>
@@ -74,7 +74,7 @@ export default function RegisterPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-accent bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-foreground/20"
+            className="w-full rounded-lg border border-accent bg-background px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-foreground/20"
             required
             minLength={8}
           />

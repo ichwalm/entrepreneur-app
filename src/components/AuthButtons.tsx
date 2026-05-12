@@ -27,14 +27,12 @@ export function AuthButtons() {
 
   return (
     <div className="flex items-center gap-3">
-      {data.user.role === "ADMIN" ? (
-        <Link
-          href="/admin"
-          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
-        >
-          Dashboard
-        </Link>
-      ) : null}
+      <Link
+        href={data.user.role === "ADMIN" ? "/admin" : "/dashboard"}
+        className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
+      >
+        Dashboard
+      </Link>
       <button
         type="button"
         onClick={() => signOut({ callbackUrl: "/" })}

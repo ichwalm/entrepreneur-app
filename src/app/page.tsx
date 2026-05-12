@@ -27,7 +27,7 @@ export default async function Home() {
         take: 6,
       }),
       prisma.product.findMany({
-        where: { isFeatured: true },
+        where: { isFeatured: true, status: "APPROVED" },
         orderBy: { updatedAt: "desc" },
         take: 10,
         include: {
@@ -36,6 +36,7 @@ export default async function Home() {
         },
       }),
       prisma.product.findMany({
+        where: { status: "APPROVED" },
         orderBy: { createdAt: "desc" },
         take: 10,
         include: {
@@ -54,6 +55,7 @@ export default async function Home() {
     <div className="w-full">
       <section id="home" className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
+          <div className="bg-grid-boxes" />
           <div className="absolute left-[-120px] top-[-120px] h-72 w-72 rounded-full bg-brand/25 blur-3xl" />
           <div className="absolute right-[-120px] top-[40px] h-72 w-72 rounded-full bg-brand2/20 blur-3xl" />
           <div className="absolute bottom-[-160px] left-[20%] h-72 w-72 rounded-full bg-accent/40 blur-3xl" />
@@ -65,10 +67,10 @@ export default async function Home() {
               <span className="h-2 w-2 rounded-full bg-brand" />
               Profil usaha modern + promosi produk
             </div>
-            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+            <h1 className="text-5xl font-semibold tracking-tight md:text-6xl">
               Bangun brand. Promosikan produk. Tumbuh lebih cepat.
             </h1>
-            <p className="max-w-xl text-sm leading-7 text-foreground/75">
+            <p className="max-w-xl text-base leading-8 text-foreground/75">
               Website entrepreneur untuk menampilkan identitas, produk unggulan,
               materi e-book, dan sistem komentar dengan moderasi. Admin mengelola
               konten, pengunjung menikmati pengalaman yang cepat dan rapi.
@@ -93,7 +95,7 @@ export default async function Home() {
                 Hubungi Kami
               </Link>
             </div>
-            <div className="grid grid-cols-3 gap-4 pt-4 text-xs text-foreground/70">
+            <div className="grid grid-cols-3 gap-4 pt-4 text-sm text-foreground/70">
               <div className="rounded-xl border border-accent bg-background/50 px-3 py-3">
                 <div className="text-lg font-semibold text-foreground">3s</div>
                 <div className="mt-1">Target load cepat</div>
@@ -144,10 +146,10 @@ export default async function Home() {
             <div className="text-xs font-semibold tracking-widest text-foreground/60">
               ABOUT US
             </div>
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
               Identitas brand yang kuat, pengalaman yang clean.
             </h2>
-            <p className="text-sm leading-7 text-foreground/75">
+            <p className="text-base leading-8 text-foreground/75">
               Kami membantu entrepreneur menyajikan profil usaha yang modern, rapi,
               dan konsisten. Konten dikelola lewat dashboard admin yang aman, dan
               pengunjung mendapatkan experience cepat serta mudah diakses di semua
@@ -191,7 +193,7 @@ export default async function Home() {
             <div className="text-xs font-semibold tracking-widest text-foreground/60">
               PRODUCT SHOWCASE
             </div>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
               Produk unggulan & terbaru
             </h2>
           </div>
@@ -215,7 +217,7 @@ export default async function Home() {
             <div className="text-xs font-semibold tracking-widest text-foreground/60">
               RESOURCES
             </div>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
               Materi e-book kewirausahaan
             </h2>
           </div>
@@ -236,10 +238,10 @@ export default async function Home() {
               <div className="text-xs font-semibold tracking-widest text-foreground/60">
                 TESTIMONI
               </div>
-              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 Dipercaya oleh pelaku usaha
               </h2>
-              <p className="text-sm text-foreground/75">
+              <p className="text-base text-foreground/75">
                 Tampilan rapi, proses konten cepat, dan promosi lebih terarah.
               </p>
             </div>
@@ -255,19 +257,19 @@ export default async function Home() {
               <div className="text-xs font-semibold tracking-widest text-foreground/60">
                 CALL TO ACTION
               </div>
-              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 Siap promosikan produkmu hari ini?
               </h2>
-              <p className="text-sm leading-7 text-foreground/75">
+              <p className="text-base leading-8 text-foreground/75">
                 Admin dapat menambahkan produk, banner promo, dan kode promo untuk
                 meningkatkan konversi. Hubungi kami untuk penempatan produk unggulan.
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
-                  href="/admin"
+                  href="/dashboard"
                   className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90"
                 >
-                  Dashboard Admin
+                  Dashboard
                 </Link>
                 <a
                   href="mailto:hello@example.com"

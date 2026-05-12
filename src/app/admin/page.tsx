@@ -21,6 +21,7 @@ export default async function AdminHomePage({
     ebookCount,
     productCount,
     pendingComments,
+    pendingProducts,
     activeBanners,
     activePromos,
     tagCount,
@@ -28,6 +29,7 @@ export default async function AdminHomePage({
     prisma.ebook.count(),
     prisma.product.count(),
     prisma.comment.count({ where: { status: "PENDING" } }),
+    prisma.product.count({ where: { status: "PENDING" } }),
     prisma.banner.count({ where: { isActive: true } }),
     prisma.promoCode.count({ where: { isActive: true } }),
     prisma.tag.count(),
@@ -79,9 +81,10 @@ export default async function AdminHomePage({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Dashboard Admin</h1>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Stat title="E-Book" value={ebookCount} />
         <Stat title="Produk" value={productCount} />
+        <Stat title="Produk Pending" value={pendingProducts} />
         <Stat title="Komentar Pending" value={pendingComments} />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

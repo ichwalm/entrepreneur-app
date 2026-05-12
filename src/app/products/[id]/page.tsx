@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CommentsSection } from "./comments-section";
 import type { Metadata } from "next";
@@ -29,6 +31,7 @@ export default async function ProductDetailPage({
   params: { id: string } | Promise<{ id: string }>;
 }) {
   const { id } = await Promise.resolve(params);
+  const session = await getServerSession(authOptions);
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
@@ -38,6 +41,12 @@ export default async function ProductDetailPage({
     },
   });
   if (!product) return notFoundView();
+
+  if (product.status !== "APPROVED") {
+    const isAdmin = session?.user?.role === "ADMIN";
+    const isOwner = !!session?.user?.id && session.user.id === product.submittedById;
+    if (!isAdmin && !isOwner) return notFoundView();
+  }
 
   const promos = await prisma.promoCode.findMany({
     where: { isActive: true },
@@ -56,6 +65,11 @@ export default async function ProductDetailPage({
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{product.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
+            {product.status !== "APPROVED" ? (
+              <span className="rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs text-foreground/80">
+                Status: {product.status}
+              </span>
+            ) : null}
             {product.isFeatured ? (
               <span className="rounded-full bg-brand px-3 py-1 text-xs font-semibold text-black">
                 Featured

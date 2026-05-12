@@ -37,6 +37,44 @@ summary:focus-visible {
   outline-offset: 2px;
 }
 
+@keyframes float-grid {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-120px, 120px, 0);
+  }
+}
+
+.bg-grid-boxes {
+  position: absolute;
+  inset: -40%;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.bg-grid-boxes::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: float-grid 14s linear infinite;
+}
+
+.bg-grid-boxes::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(245, 158, 11, 0.22), transparent 40%),
+    radial-gradient(circle at 70% 30%, rgba(239, 68, 68, 0.18), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.1), transparent 45%);
+  filter: blur(8px);
+}
+
 .rte h3,
 .rte h4 {
   font-weight: 600;

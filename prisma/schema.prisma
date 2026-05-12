@@ -18,6 +18,12 @@ enum CommentStatus {
   REJECTED
 }
 
+enum ProductStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -27,6 +33,7 @@ model User {
   createdAt    DateTime @default(now())
 
   ebooksUploaded Ebook[] @relation("UploadedBy")
+  productsSubmitted Product[] @relation("SubmittedBy")
 }
 
 model Ebook {
@@ -56,9 +63,13 @@ model Product {
   descriptionHtml String? @db.Text
   category      String?
   isFeatured    Boolean  @default(false)
+  status        ProductStatus @default(APPROVED)
   locationName  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  submittedById String?
+  submittedBy   User?    @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
 
   images     ProductImage[]
   comments   Comment[]
@@ -66,6 +77,7 @@ model Product {
   tags       ProductTag[]
 
   @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model ProductImage {

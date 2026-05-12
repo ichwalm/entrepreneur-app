@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { DeleteProductButton } from "./delete-button";
+import { ProductStatusActions } from "./status-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,13 @@ export default async function AdminProductsPage({
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const featured = typeof sp.featured === "string" ? sp.featured : "";
   const category = typeof sp.category === "string" ? sp.category.trim() : "";
+  const statusRaw = typeof sp.status === "string" ? sp.status.trim() : "";
+  const status = (() => {
+    if (statusRaw === "PENDING") return "PENDING" as const;
+    if (statusRaw === "APPROVED") return "APPROVED" as const;
+    if (statusRaw === "REJECTED") return "REJECTED" as const;
+    return null;
+  })();
 
   const where = {
     ...(q
@@ -27,6 +35,7 @@ export default async function AdminProductsPage({
     ...(featured === "true" ? { isFeatured: true } : {}),
     ...(featured === "false" ? { isFeatured: false } : {}),
     ...(category ? { category } : {}),
+    ...(status ? { status } : {}),
   } as const;
 
   const products = await prisma.product.findMany({
@@ -88,6 +97,16 @@ export default async function AdminProductsPage({
             </option>
           ))}
         </select>
+        <select
+          name="status"
+          defaultValue={status ?? ""}
+          className="w-full rounded-lg border border-accent bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+        >
+          <option value="">Semua status</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
         <div className="md:col-span-4">
           <button
             type="submit"
@@ -109,6 +128,7 @@ export default async function AdminProductsPage({
           <thead className="bg-accent/20 text-xs text-foreground/70">
             <tr>
               <th className="px-4 py-3">Judul</th>
+              <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Kategori</th>
               <th className="px-4 py-3">Alamat</th>
               <th className="px-4 py-3">Tanggal</th>
@@ -119,6 +139,9 @@ export default async function AdminProductsPage({
             {products.map((p) => (
               <tr key={p.id} className="border-t border-accent">
                 <td className="px-4 py-3">{p.title}</td>
+                <td className="px-4 py-3">
+                  <ProductStatusActions id={p.id} status={p.status} />
+                </td>
                 <td className="px-4 py-3 text-foreground/70">
                   {p.category ?? "-"}
                 </td>
@@ -151,7 +174,7 @@ export default async function AdminProductsPage({
               <tr>
                 <td
                   className="px-4 py-10 text-center text-sm text-foreground/70"
-                  colSpan={5}
+                  colSpan={6}
                 >
                   Belum ada produk.
                 </td>
