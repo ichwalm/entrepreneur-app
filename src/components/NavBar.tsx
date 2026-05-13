@@ -23,6 +23,9 @@ export function NavBar() {
           <Link href="/#showcase" className="hover:text-foreground">
             Showcase
           </Link>
+          <Link href="/products" className="hover:text-foreground">
+            Produk
+          </Link>
           <Link href="/#ebooks" className="hover:text-foreground">
             E-Book
           </Link>
@@ -50,6 +53,9 @@ export function NavBar() {
                 </Link>
                 <Link className="rounded-lg px-3 py-2 hover:bg-accent" href="/#showcase">
                   Showcase
+                </Link>
+                <Link className="rounded-lg px-3 py-2 hover:bg-accent" href="/products">
+                  Produk
                 </Link>
                 <Link className="rounded-lg px-3 py-2 hover:bg-accent" href="/#ebooks">
                   E-Book

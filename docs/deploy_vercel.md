@@ -1,12 +1,17 @@
 # Deploy ke Vercel (Production)
 
-Dokumen ini menjelaskan langkah deploy project **Wirausaha-App** ke **Vercel** dengan MySQL + Prisma + NextAuth + Vercel Blob.
+Dokumen ini menjelaskan langkah deploy project **Wirausaha-App** ke **Vercel** dengan MySQL + Prisma + NextAuth.
+
+Penting:
+- Implementasi saat ini menyimpan file upload ke filesystem lokal (`uploads/` atau `UPLOAD_DIR`).
+- Lingkungan serverless (termasuk Vercel) tidak menyediakan disk persisten untuk penyimpanan file upload.
+- Agar fitur upload gambar & upload e-book tetap bekerja di Vercel, perlu migrasi storage ke layanan eksternal (mis. Vercel Blob / S3 / R2).
 
 ## Prasyarat
 
 - Repo sudah ada di GitHub/GitLab/Bitbucket
 - Database MySQL production yang bisa diakses dari internet (bukan MySQL lokal)
-- Vercel Blob aktif (untuk upload e-book & gambar produk)
+- Project Vercel
 
 ## 1) Siapkan Database MySQL Production
 
@@ -37,14 +42,12 @@ Masuk ke **Project Settings → Environment Variables**, lalu tambahkan:
 DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/DB_NAME"
 NEXTAUTH_SECRET="string-random-panjang"
 NEXTAUTH_URL="https://domain-kamu.vercel.app"
-BLOB_READ_WRITE_TOKEN="token-vercel-blob"
 ```
 
 Catatan:
 - `DATABASE_URL` wajib agar Prisma bisa konek ke MySQL.
 - `NEXTAUTH_SECRET` wajib untuk JWT/session.
 - `NEXTAUTH_URL` harus URL production (kalau pakai domain custom, gunakan domain custom).
-- `BLOB_READ_WRITE_TOKEN` wajib agar upload e-book/gambar produk berhasil.
 
 ## 4) Deploy
 
@@ -94,6 +97,16 @@ Checklist cepat:
 - Download e-book hanya bisa setelah login
 - Route `/admin` tidak bisa dibuka oleh user non-admin
 
+## 8) Catatan Penting: Upload di Vercel
+Jika deploy ke Vercel tanpa storage eksternal:
+- Upload gambar (product image / cover / banner) yang tersimpan ke `uploads/` tidak akan persisten.
+- Upload e-book yang tersimpan ke `uploads/private/ebooks` juga tidak persisten.
+- Gejala umum: file berhasil di-upload, tetapi hilang setelah redeploy / scale / cold start.
+
+Solusi yang disarankan:
+- Migrasikan implementasi upload ke storage eksternal (Vercel Blob/S3/R2), lalu simpan URL publik di database.
+- Untuk e-book, simpan URL file yang diproteksi/bermasa-akses (signed URL) atau simpan link private lalu proxy download dengan auth.
+
 ## Troubleshooting
 
 ### A) Prisma error koneksi database
@@ -101,10 +114,10 @@ Checklist cepat:
 - Pastikan DB mengizinkan koneksi dari internet dan firewall/security group terbuka untuk Vercel.
 
 ### B) Upload gagal (Blob)
-- Pastikan `BLOB_READ_WRITE_TOKEN` sudah benar.
-- Pastikan Vercel Blob storage aktif di akun/project.
+Jika sudah migrasi ke storage eksternal:
+- Pastikan token/credential storage sudah benar.
+- Pastikan bucket/container dan permission sudah tepat.
 
 ### C) Login/redirect aneh
 - Pastikan `NEXTAUTH_URL` sesuai domain yang benar (bukan localhost).
 - Pastikan `NEXTAUTH_SECRET` terisi dan tidak berubah-ubah.
-

@@ -48,6 +48,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               Moderasi Komentar
             </Link>
+            <Link
+              href="/admin/settings"
+              className="rounded-lg px-2 py-1.5 hover:bg-accent"
+            >
+              Settings
+            </Link>
           </nav>
         </aside>
         <div className="min-w-0 flex-1">{children}</div>

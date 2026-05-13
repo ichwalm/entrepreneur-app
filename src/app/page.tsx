@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getHomepageSettings } from "@/lib/siteSettings";
 import type { Banner, Prisma, PromoCode } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ type ProductShowcase = Prisma.ProductGetPayload<{
 }>;
 
 export default async function Home() {
-  const [banners, promos, featuredProducts, latestProducts, ebooks] =
+  const [banners, promos, featuredProducts, latestProducts, ebooks, homepage] =
     await Promise.all([
       prisma.banner.findMany({
         where: { isActive: true },
@@ -49,6 +50,7 @@ export default async function Home() {
         take: 9,
         include: { tags: { include: { tag: true } } },
       }),
+      getHomepageSettings(),
     ]);
 
   return (
@@ -65,15 +67,13 @@ export default async function Home() {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs text-foreground/80">
               <span className="h-2 w-2 rounded-full bg-brand" />
-              Profil usaha modern + promosi produk
+              {homepage.heroBadge}
             </div>
             <h1 className="text-5xl font-semibold tracking-tight md:text-6xl">
-              Bangun brand. Promosikan produk. Tumbuh lebih cepat.
+              {homepage.heroTitle}
             </h1>
             <p className="max-w-xl text-base leading-8 text-foreground/75">
-              Website entrepreneur untuk menampilkan identitas, produk unggulan,
-              materi e-book, dan sistem komentar dengan moderasi. Admin mengelola
-              konten, pengunjung menikmati pengalaman yang cepat dan rapi.
+              {homepage.heroDescription}
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Link
@@ -161,16 +161,13 @@ export default async function Home() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:items-center">
           <div className="space-y-4">
             <div className="text-xs font-semibold tracking-widest text-foreground/60">
-              ABOUT US
+              {homepage.aboutEyebrow}
             </div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Identitas brand yang kuat, pengalaman yang clean.
+              {homepage.aboutTitle}
             </h2>
             <p className="text-base leading-8 text-foreground/75">
-              Kami membantu entrepreneur menyajikan profil usaha yang modern, rapi,
-              dan konsisten. Konten dikelola lewat dashboard admin yang aman, dan
-              pengunjung mendapatkan experience cepat serta mudah diakses di semua
-              perangkat.
+              {homepage.aboutDescription}
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FeatureCard title="Konten Terstruktur" text="Banner, produk unggulan, promo codes, dan e-book." />
@@ -195,10 +192,10 @@ export default async function Home() {
             <div className="rounded-2xl border border-accent bg-background p-6">
               <div className="text-xs text-foreground/60">Tagline</div>
               <div className="mt-2 text-2xl font-semibold tracking-tight">
-                “From idea to market — faster.”
+                {homepage.aboutTaglineTitle}
               </div>
               <div className="mt-4 text-sm text-foreground/75">
-                Tampilkan produk terbaikmu dengan visual konsisten dan copywriting yang fokus pada nilai.
+                {homepage.aboutTaglineSubtitle}
               </div>
               <div className="mt-6 flex flex-wrap gap-2">
                 <span className="rounded-full bg-brand/15 px-3 py-1 text-xs text-brand">
@@ -285,14 +282,13 @@ export default async function Home() {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-center">
             <div className="space-y-3">
               <div className="text-xs font-semibold tracking-widest text-foreground/60">
-                CALL TO ACTION
+                {homepage.contactEyebrow}
               </div>
               <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                Siap promosikan produkmu hari ini?
+                {homepage.contactTitle}
               </h2>
               <p className="text-base leading-8 text-foreground/75">
-                Admin dapat menambahkan produk, banner promo, dan kode promo untuk
-                meningkatkan konversi. Hubungi kami untuk penempatan produk unggulan.
+                {homepage.contactDescription}
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
@@ -302,7 +298,7 @@ export default async function Home() {
                   Dashboard
                 </Link>
                 <a
-                  href="mailto:hello@example.com"
+                  href={`mailto:${homepage.contactEmail}`}
                   className="rounded-lg border border-accent px-5 py-2.5 text-sm hover:bg-accent"
                 >
                   Email Kami
@@ -325,15 +321,15 @@ export default async function Home() {
               <div className="mt-3 space-y-2 text-sm text-foreground/80">
                 <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
                   <span>Email</span>
-                  <span className="text-foreground/70">hello@example.com</span>
+                  <span className="text-foreground/70">{homepage.contactEmail}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
                   <span>WhatsApp</span>
-                  <span className="text-foreground/70">+62 812-xxxx-xxxx</span>
+                  <span className="text-foreground/70">{homepage.contactWhatsapp}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
                   <span>Jam Operasional</span>
-                  <span className="text-foreground/70">09.00–17.00</span>
+                  <span className="text-foreground/70">{homepage.contactHours}</span>
                 </div>
               </div>
               <div className="mt-4 text-xs text-foreground/60">
@@ -343,7 +339,7 @@ export default async function Home() {
           </div>
         </div>
         <footer className="mt-10 text-center text-xs text-foreground/50">
-          © {new Date().getFullYear()} Entrepreneur Platform. All rights reserved.
+          © {new Date().getFullYear()} {homepage.footerText}
         </footer>
       </section>
     </div>
